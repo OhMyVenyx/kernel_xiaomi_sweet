@@ -1,42 +1,52 @@
-**English** | [中文](README_CN.md)
-
 # KernelSU
 
-A Kernel based root solution for Android devices.
+<img src="https://kernelsu.org/logo.png" style="width: 96px;" alt="logo">
+
+A Kernel-based root solution for Android devices.
+
+[![latest release badge](https://img.shields.io/github/v/release/tiann/KernelSU?label=Release&logo=github)](https://github.com/tiann/KernelSU/releases/latest)
+[![weblate](https://img.shields.io/badge/Localization-Weblate-teal?logo=weblate)](https://hosted.weblate.org/engage/kernelsu)
+[![Channel](https://img.shields.io/badge/Follow-Telegram-blue.svg?logo=telegram)](https://t.me/KernelSU)
+[![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-orange.svg?logo=gnu)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
+[![GitHub License](https://img.shields.io/github/license/tiann/KernelSU?logo=gnu)](/LICENSE)
+
 
 ## Features
 
 1. Kernel-based `su` and root access management.
-2. Module system based on overlayfs.
+2. Module system based on [OverlayFS](https://en.wikipedia.org/wiki/OverlayFS).
+3. [App Profile](https://kernelsu.org/guide/app-profile.html): Lock up the root power in a cage.
 
 ## Compatibility State
 
-KernelSU officially supports Android GKI 2.0 devices(with kernel 5.10+), old kernels(4.14+) is also compatiable, but you need to build kernel yourself.
+KernelSU officially supports Android GKI 2.0 devices (kernel 5.10+). Older kernels (4.14+) are also compatible, but the kernel will have to be built manually.
 
-WSA and containter-based Android should also work with KernelSU integrated.
+With this, WSA, ChromeOS, and container-based Android are all supported.
 
-And the current supported ABIs are : `arm64-v8a` and `x86_64`
+Currently, only `arm64-v8a` and `x86_64` are supported.
 
 ## Usage
 
-[Installation](https://kernelsu.org/guide/installation.html)
+- [Installation Instruction](https://kernelsu.org/guide/installation.html)
+- [How to build?](https://kernelsu.org/guide/how-to-build.html)
+- [Official Website](https://kernelsu.org/)
 
-## Build
+## Translation
 
-[How to build?](https://kernelsu.org/guide/how-to-build.html)
+To help translate KernelSU or improve existing translations, please use [Weblate](https://hosted.weblate.org/engage/kernelsu/). PR of Manager's translation is no longer accepted, because it will conflict with Weblate.
 
-### Discussion
+## Discussion
 
 - Telegram: [@KernelSU](https://t.me/KernelSU)
 
 ## License
 
-- Files under `kernel` directory are [GPL-2](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
-- All other parts except `kernel` directory are [GPL-3](https://www.gnu.org/licenses/gpl-3.0.html)
+- Files under the `kernel` directory are [GPL-2.0-only](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
+- All other parts except the `kernel` directory are [GPL-3.0-or-later](https://www.gnu.org/licenses/gpl-3.0.html)
 
 ## Credits
 
 - [kernel-assisted-superuser](https://git.zx2c4.com/kernel-assisted-superuser/about/): the KernelSU idea.
+- [Magisk](https://github.com/topjohnwu/Magisk): the powerful root tool.
 - [genuine](https://github.com/brevent/genuine/): apk v2 signature validation.
 - [Diamorphine](https://github.com/m0nad/Diamorphine): some rootkit skills.
-- [Magisk](https://github.com/topjohnwu/Magisk): the sepolicy implementation.

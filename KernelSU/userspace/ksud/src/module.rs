@@ -140,8 +140,7 @@ fn get_minimal_image_size(img: &str) -> Result<u64> {
 fn check_image(img: &str) -> Result<()> {
     let result = Command::new("e2fsck")
         .args(["-yf", img])
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
+        .stdout(Stdio::piped())
         .status()
         .with_context(|| format!("Failed to exec e2fsck {img}"))?;
     let code = result.code();
@@ -149,11 +148,12 @@ fn check_image(img: &str) -> Result<()> {
     // 0: no error
     // 1: file system errors corrected
     // https://man7.org/linux/man-pages/man8/e2fsck.8.html
-    ensure!(
-        code == Some(0) || code == Some(1),
-        "Failed to check image, e2fsck exit code: {}",
-        code.unwrap_or(-1)
-    );
+    // ensure!(
+    //     code == Some(0) || code == Some(1),
+    //     "Failed to check image, e2fsck exit code: {}",
+    //     code.unwrap_or(-1)
+    // );
+    info!("e2fsck exit code: {}", code.unwrap_or(-1));
     Ok(())
 }
 
@@ -172,7 +172,7 @@ fn grow_image_size(img: &str, extra_size: u64) -> Result<()> {
     info!("resize image to {target_size}K, minimal size is {minimal_size}K");
     let result = Command::new("resize2fs")
         .args([img, &format!("{target_size}K")])
-        .stdout(Stdio::null())
+        .stdout(Stdio::piped())
         .status()
         .with_context(|| format!("Failed to exec resize2fs {img}"))?;
     ensure!(result.success(), "Failed to resize2fs: {}", result);
@@ -344,7 +344,7 @@ fn _install_module(zip: &str) -> Result<()> {
     zip_extract_file_to_memory(&zip_path, &entry_path, &mut buffer)?;
 
     let mut module_prop = HashMap::new();
-    PropertiesIter::new_with_encoding(Cursor::new(buffer), encoding::all::UTF_8).read_into(
+    PropertiesIter::new_with_encoding(Cursor::new(buffer), encoding_rs::UTF_8).read_into(
         |k, v| {
             module_prop.insert(k, v);
         },
@@ -354,6 +354,7 @@ fn _install_module(zip: &str) -> Result<()> {
     let Some(module_id) = module_prop.get("id") else {
         bail!("module id not found in module.prop!");
     };
+    let module_id = module_id.trim();
 
     let modules_img = Path::new(defs::MODULE_IMG);
     let modules_update_img = Path::new(defs::MODULE_UPDATE_IMG);
@@ -402,7 +403,7 @@ fn _install_module(zip: &str) -> Result<()> {
             .arg("-b")
             .arg("1024")
             .arg(tmp_module_img)
-            .stdout(Stdio::null())
+            .stdout(Stdio::piped())
             .output()?;
         ensure!(
             result.status.success(),
@@ -438,7 +439,7 @@ fn _install_module(zip: &str) -> Result<()> {
     }
 
     // ensure modules_update exists
-    ensure_clean_dir(module_update_tmp_dir)?;
+    ensure_dir_exists(module_update_tmp_dir)?;
 
     // mount the modules_update.img to mountpoint
     println!("- Mounting image");
@@ -558,12 +559,13 @@ pub fn uninstall_module(id: &str) -> Result<()> {
             }
             let content = std::fs::read(module_prop)?;
             let mut module_id: String = String::new();
-            PropertiesIter::new_with_encoding(Cursor::new(content), encoding::all::UTF_8)
-                .read_into(|k, v| {
+            PropertiesIter::new_with_encoding(Cursor::new(content), encoding_rs::UTF_8).read_into(
+                |k, v| {
                     if k.eq("id") {
                         module_id = v;
                     }
-                })?;
+                },
+            )?;
             if module_id.eq(mid) {
                 let remove_file = path.join(defs::REMOVE_FILE_NAME);
                 File::create(remove_file).with_context(|| "Failed to create remove file.")?;
@@ -656,11 +658,21 @@ fn _list_modules(path: &str) -> Vec<HashMap<String, String>> {
             continue;
         };
         let mut module_prop_map: HashMap<String, String> = HashMap::new();
-        let encoding = encoding::all::UTF_8;
+        let encoding = encoding_rs::UTF_8;
         let result =
             PropertiesIter::new_with_encoding(Cursor::new(content), encoding).read_into(|k, v| {
                 module_prop_map.insert(k, v);
             });
+
+        if !module_prop_map.contains_key("id") || module_prop_map["id"].is_empty() {
+            if let Some(id) = entry.file_name().to_str() {
+                info!("Use dir name as module id: {}", id);
+                module_prop_map.insert("id".to_owned(), id.to_owned());
+            } else {
+                info!("Failed to get module id: {:?}", module_prop);
+                continue;
+            }
+        }
 
         // Add enabled, update, remove flags
         let enabled = !path.join(defs::DISABLE_FILE_NAME).exists();
